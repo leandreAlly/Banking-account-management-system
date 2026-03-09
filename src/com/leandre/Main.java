@@ -37,7 +37,7 @@ public class Main {
                     break;
                 case 4:
                     System.out.println("→ View Transaction History selected");
-                    TransactionCLI.viewTransactionHistory(scanner, transactionManager);
+                    TransactionCLI.viewTransactionHistory(scanner, accountManager, transactionManager);
                     break;
                 case 5:
                     System.out.println("Goodbye!");

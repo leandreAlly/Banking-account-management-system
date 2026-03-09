@@ -39,6 +39,18 @@ public class SavingAccount extends Account {
         return "Savings";
     }
 
+    @Override
+    public double withdraw(double amount) {
+        if (amount <= 0) throw new IllegalArgumentException("Amount must be positive");
+        if (getBalance() - amount < minimumBalance) {
+            throw new IllegalArgumentException(
+                    "Withdrawal denied. Balance cannot fall below the minimum balance of $" +
+                    String.format("%,.2f", minimumBalance));
+        }
+        setBalance(getBalance() - amount);
+        return getBalance();
+    }
+
     public double calculateInterestRate() {
         return getBalance() * (interestRate / 100);
     }

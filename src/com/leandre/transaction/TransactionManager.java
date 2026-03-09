@@ -36,36 +36,43 @@ public class TransactionManager {
         return result.isEmpty() ? "No transactions found for account: " + accountNumber : result.toString();
     }
 
-    public void calculateTotalDeposits(String accountNumber) {
-        double totalDeposits = 0;
-
+    public double calculateTotalDeposits(String accountNumber) {
+        double total = 0;
         for (int i = 0; i < transactionCount; i++) {
             Transaction t = transactions[i];
-            //TODO: check if I need to specify the account type
             if (t.getAccountNumber().equals(accountNumber)) {
-                totalDeposits += t.getAmount();
+                total += t.getAmount();
             }
         }
-
-        System.out.println("Total deposits for account " + accountNumber + ": " + totalDeposits);
+        return total;
     }
 
-    public void calculateTotalWithdrawals(String accountNumber) {
-        double totalWithdrawals = 0;
-
+    public double calculateTotalWithdrawals(String accountNumber) {
+        double total = 0;
         for (int i = 0; i < transactionCount; i++) {
             Transaction t = transactions[i];
-            //TODO: check if I need to specify the account type
             if (t.getAccountNumber().equals(accountNumber)) {
-                totalWithdrawals += t.getAmount();
+                total += t.getAmount();
             }
-
         }
-
-        System.out.println("Total withdrawals for account " + accountNumber + ": " + totalWithdrawals);
+        return total;
+    }
+    public int countByAccount(String accountNumber) {
+        int count = 0;
+        for (int i = 0; i < transactionCount; i++) {
+            if (transactions[i].getAccountNumber().equals(accountNumber)) count++;
+        }
+        return count;
     }
 
     public int getTransactionCount() {
         return transactionCount;
+    }
+
+    public Transaction getTransaction(int index) {
+        if (index < 0 || index >= transactionCount) {
+            throw new IndexOutOfBoundsException("Invalid transaction index: " + index);
+        }
+        return transactions[index];
     }
 }

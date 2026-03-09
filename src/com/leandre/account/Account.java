@@ -19,18 +19,14 @@ public abstract class Account {
 
     public abstract void displayAccountDetails();
     public abstract String getAccountType();
+    public abstract double withdraw(double amount);
 
     public double deposit(double amount) {
         if(amount <= 0) throw new IllegalArgumentException("Amount cannot be negative");
         balance = balance + amount;
         return balance;
     }
-    public double withdraw(double amount) {
-        if(amount <= 0) throw new IllegalArgumentException("Amount cannot be negative");
-        if (amount > balance) throw new IllegalArgumentException("Amount cannot be greater than account's balance");
-        balance = balance - amount;
-        return balance;
-    }
+
 
     public String getAccountNumber() {
         return accountNumber;
