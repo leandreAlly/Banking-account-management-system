@@ -51,7 +51,7 @@ public class AccountCLI {
         double initialDeposit = scanner.nextDouble();
 
         // Build the customer
-        String customerId = "CUST-" + (customerType == 2 ? "PREM" : "REG") + "-" + (Account.getAccountCounter() + 1);
+        String customerId = "CUST-" + (customerType == 2 ? "PREM" : "REG") + "-" + String.format("%03d", Account.getAccountCounter() + 1);
         Customer customer;
         if (customerType == 2) {
             customer = new PremiumCustomer(customerId, name, age, contact, address);
@@ -60,7 +60,7 @@ public class AccountCLI {
         }
 
         // Build the account and hand it off to AccountManager
-        String accountNumber = "ACC-" + (Account.getAccountCounter() + 1);
+        String accountNumber = "ACC-" + String.format("%03d", Account.getAccountCounter() + 1);
         Account account;
         if (accountType == 1) {
             account = new SavingAccount(accountNumber, initialDeposit, "Active", customer);
