@@ -76,15 +76,10 @@ public class TransactionCLI {
 
         if (confirm.equals("Y")) {
             try {
-                double newBalanceActual;
-                if (typeChoice == 1) {
-                    newBalanceActual = account.deposit(amount);
-                } else {
-                    newBalanceActual = account.withdraw(amount);
-                }
+                account.processTransaction(amount, type);
 
                 // record the transaction
-                Transaction transaction = new Transaction(accountNumber, type, amount, newBalanceActual);
+                Transaction transaction = new Transaction(accountNumber, type, amount, account.getBalance());
                 transactionManager.addTransaction(transaction);
 
                 System.out.println("\n✓ Transaction completed successfully!");

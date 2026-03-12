@@ -1,8 +1,21 @@
 package com.leandre.account;
 
 import com.leandre.customer.Customer;
+import com.leandre.transaction.Transactable;
 
-public abstract class Account {
+public abstract class Account implements Transactable {
+
+    @Override
+    public boolean processTransaction(double amount, String type) {
+        if (type.equals("DEPOSIT")) {
+            deposit(amount);
+        } else if (type.equals("WITHDRAWAL")) {
+            withdraw(amount);
+        } else {
+            return false;
+        }
+        return true;
+    }
     private String accountNumber;
     private double balance;
     private String status;
@@ -40,7 +53,7 @@ public abstract class Account {
         return balance;
     }
 
-    public void setBalance(double balance) {
+    protected void setBalance(double balance) {
         this.balance = balance;
     }
 

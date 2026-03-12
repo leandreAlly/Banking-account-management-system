@@ -14,7 +14,6 @@ public abstract class Customer {
         this.age = age;
         this.contact = contact;
         this.address = address;
-        customerCounter++;
     }
 
     public abstract void displayCustomerDetails();
