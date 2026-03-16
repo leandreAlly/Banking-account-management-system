@@ -8,9 +8,9 @@ public abstract class Account implements Transactable {
 
     @Override
     public boolean processTransaction(double amount, String type) throws InsufficientFundsException {
-        if (type.equals("DEPOSIT")) {
+        if (type.equals("DEPOSIT") || type.equals("TRANSFER_IN")) {
             deposit(amount);
-        } else if (type.equals("WITHDRAWAL")) {
+        } else if (type.equals("WITHDRAWAL") || type.equals("TRANSFER_OUT")) {
             withdraw(amount);
         } else {
             return false;
@@ -36,7 +36,7 @@ public abstract class Account implements Transactable {
     public abstract double withdraw(double amount) throws InsufficientFundsException;
 
     public double previewBalance(double amount, String type) {
-        if (type.equals("DEPOSIT")) {
+        if (type.equals("DEPOSIT") || type.equals("TRANSFER_IN")) {
             return balance + amount;
         } else {
             return balance - amount;

@@ -40,8 +40,14 @@ public class TransactionCLI {
         System.out.println("\nTransaction type:");
         System.out.println("1. Deposit");
         System.out.println("2. Withdrawal");
-        System.out.print("Select type (1-2): ");
+        System.out.println("3. Transfer to Account");
+        System.out.print("Select type (1-3): ");
         int typeChoice = scanner.nextInt();
+
+        if (typeChoice == 3) {
+            handleTransfer(scanner, account, accountNumber, accountManager, transactionManager);
+            return;
+        }
 
         String type = typeChoice == 1 ? "DEPOSIT" : "WITHDRAWAL";
 
@@ -140,7 +146,7 @@ public class TransactionCLI {
             for (int i = 0; i < transactionManager.getTransactionCount(); i++) {
                 Transaction t = transactionManager.getTransaction(i);
                 if (t.getAccountNumber().equals(accountNumber)) {
-                    String sign = t.getType().equals("DEPOSIT") ? "+" : "-";
+                    String sign = (t.getType().equals("DEPOSIT") || t.getType().equals("TRANSFER_IN")) ? "+" : "-";
                     System.out.printf("%-8s | %-18s | %-10s | %12s | $%,.2f%n",
                             t.getTransactionId(),
                             t.getTimestamp(),
@@ -161,6 +167,77 @@ public class TransactionCLI {
             System.out.printf("Total Deposits     : $%,.2f%n", deposits);
             System.out.printf("Total Withdrawals  : $%,.2f%n", withdrawals);
             System.out.printf("Net Change         : %s$%,.2f%n", netChange >= 0 ? "+" : "-", Math.abs(netChange));
+        }
+
+        System.out.print("\nPress Enter to continue...");
+        scanner.nextLine();
+    }
+
+    private static void handleTransfer(Scanner scanner, Account sourceAccount, String sourceNumber,
+                                         AccountManager accountManager, TransactionManager transactionManager) {
+        scanner.nextLine();
+        System.out.print("\nEnter Destination Account Number: ");
+        String destNumber = scanner.nextLine().toUpperCase();
+
+        if (sourceNumber.equals(destNumber)) {
+            System.out.println("\n✗ Cannot transfer to the same account.");
+            System.out.print("\nPress Enter to continue...");
+            scanner.nextLine();
+            return;
+        }
+
+        Account destAccount;
+        try {
+            destAccount = accountManager.findAccount(destNumber);
+        } catch (InvalidAccountException e) {
+            System.out.println("\n✗ Destination account error: " + e.getMessage());
+            System.out.print("\nPress Enter to continue...");
+            scanner.nextLine();
+            return;
+        }
+
+        System.out.println("\nDestination Account:");
+        System.out.println("Customer: " + destAccount.getCustomer().getName());
+        System.out.println("Account Type: " + destAccount.getAccountType());
+
+        System.out.print("\nEnter transfer amount: $");
+        double amount = scanner.nextDouble();
+
+        if (amount <= 0) {
+            System.out.println("\n✗ Amount must be positive.");
+            System.out.print("\nPress Enter to continue...");
+            scanner.nextLine();
+            scanner.nextLine();
+            return;
+        }
+
+        double sourcePrevBalance = sourceAccount.getBalance();
+        double sourceNewBalance = sourceAccount.previewBalance(amount, "TRANSFER_OUT");
+
+        System.out.println("\nTRANSFER CONFIRMATION");
+        System.out.println("─".repeat(50));
+        System.out.println("From Account    : " + sourceNumber + " (" + sourceAccount.getCustomer().getName() + ")");
+        System.out.println("To Account      : " + destNumber + " (" + destAccount.getCustomer().getName() + ")");
+        System.out.printf("Transfer Amount : $%,.2f%n", amount);
+        System.out.println("─".repeat(50));
+        System.out.printf("Your Balance    : $%,.2f → $%,.2f%n", sourcePrevBalance, sourceNewBalance);
+        System.out.println("─".repeat(50));
+
+        scanner.nextLine();
+        System.out.print("Confirm transfer? (Y/N): ");
+        String confirm = scanner.nextLine().toUpperCase();
+
+        if (confirm.equals("Y")) {
+            try {
+                transactionManager.executeTransfer(sourceAccount, destAccount, amount);
+                System.out.println("\n✓ Transfer completed successfully!");
+            } catch (InsufficientFundsException e) {
+                System.out.printf("\n✗ Transfer failed: %s%n", e.getMessage());
+                System.out.printf("  Current balance: $%,.2f | Attempted transfer: $%,.2f | Deficit: $%,.2f%n",
+                        e.getCurrentBalance(), e.getWithdrawAmount(), e.getDeficit());
+            }
+        } else {
+            System.out.println("\n✗ Transfer cancelled.");
         }
 
         System.out.print("\nPress Enter to continue...");
