@@ -2,6 +2,8 @@ package com.leandre.cli;
 
 import com.leandre.account.Account;
 import com.leandre.account.AccountManager;
+import com.leandre.exception.InsufficientFundsException;
+import com.leandre.exception.InvalidAccountException;
 import com.leandre.transaction.Transaction;
 import com.leandre.transaction.TransactionManager;
 
@@ -14,13 +16,17 @@ public class TransactionCLI {
         System.out.println("─".repeat(50));
 
         // Step 1: find the account
-        scanner.nextLine(); // clear buffer
+        scanner.nextLine();
         System.out.print("Enter Account Number: ");
         String accountNumber = scanner.nextLine().toUpperCase();
 
-        Account account = accountManager.findAccount(accountNumber);
-        if (account == null) {
-            System.out.println("Account not found.");
+        Account account;
+        try {
+            account = accountManager.findAccount(accountNumber);
+        } catch (InvalidAccountException e) {
+            System.out.println("\n✗ " + e.getMessage());
+            System.out.print("\nPress Enter to continue...");
+            scanner.nextLine();
             return;
         }
 
@@ -53,12 +59,10 @@ public class TransactionCLI {
         }
 
         double previousBalance = account.getBalance();
-        double newBalance = typeChoice == 1
-                ? previousBalance + amount
-                : previousBalance - amount;
+        double newBalance = account.previewBalance(amount, type);
 
         // Step 6: show confirmation
-        String transactionId = "TXN" + String.format("%03d", Transaction.getTransactionCounter() + 1);
+        String transactionId = Transaction.peekNextId();
         System.out.println("\nTRANSACTION CONFIRMATION");
         System.out.println("─".repeat(50));
         System.out.println("Transaction ID  : " + transactionId);
@@ -76,15 +80,12 @@ public class TransactionCLI {
 
         if (confirm.equals("Y")) {
             try {
-                account.processTransaction(amount, type);
-
-                // record the transaction
-                Transaction transaction = new Transaction(accountNumber, type, amount, account.getBalance());
-                transactionManager.addTransaction(transaction);
-
+                transactionManager.executeTransaction(account, amount, type);
                 System.out.println("\n✓ Transaction completed successfully!");
-            } catch (IllegalArgumentException e) {
-                System.out.println("\n✗ Transaction failed: " + e.getMessage());
+            } catch (InsufficientFundsException e) {
+                System.out.printf("\n✗ Transaction failed: %s%n", e.getMessage());
+                System.out.printf("  Current balance: $%,.2f | Attempted withdrawal: $%,.2f | Deficit: $%,.2f%n",
+                        e.getCurrentBalance(), e.getWithdrawAmount(), e.getDeficit());
             }
         } else {
             System.out.println("\n✗ Transaction cancelled.");
@@ -104,9 +105,13 @@ public class TransactionCLI {
         String accountNumber = scanner.nextLine().toUpperCase();
 
         // find the account
-        Account account = accountManager.findAccount(accountNumber);
-        if (account == null) {
-            System.out.println("Account not found.");
+        Account account;
+        try {
+            account = accountManager.findAccount(accountNumber);
+        } catch (InvalidAccountException e) {
+            System.out.println("\n✗ " + e.getMessage());
+            System.out.print("\nPress Enter to continue...");
+            scanner.nextLine();
             return;
         }
 

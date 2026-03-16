@@ -1,5 +1,8 @@
 package com.leandre.transaction;
 
+import com.leandre.account.Account;
+import com.leandre.exception.InsufficientFundsException;
+
 public class TransactionManager {
     private final Transaction[] transactions;
     private int transactionCount;
@@ -7,6 +10,13 @@ public class TransactionManager {
     public TransactionManager() {
         transactions = new Transaction[100];
         transactionCount = 0;
+    }
+
+    public Transaction executeTransaction(Account account, double amount, String type) throws InsufficientFundsException {
+        account.processTransaction(amount, type);
+        Transaction transaction = new Transaction(account.getAccountNumber(), type, amount, account.getBalance());
+        addTransaction(transaction);
+        return transaction;
     }
 
     public void addTransaction(Transaction transaction) {

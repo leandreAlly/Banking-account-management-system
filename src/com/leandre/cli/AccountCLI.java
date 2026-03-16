@@ -2,11 +2,7 @@ package com.leandre.cli;
 
 import com.leandre.account.Account;
 import com.leandre.account.AccountManager;
-import com.leandre.account.CheckingAccount;
-import com.leandre.account.SavingAccount;
 import com.leandre.customer.Customer;
-import com.leandre.customer.PremiumCustomer;
-import com.leandre.customer.RegularCustomer;
 
 import java.util.Scanner;
 
@@ -50,25 +46,9 @@ public class AccountCLI {
         System.out.print("Enter initial deposit amount: $");
         double initialDeposit = scanner.nextDouble();
 
-        // Build the customer
-        String customerId = "CUST-" + (customerType == 2 ? "PREM" : "REG") + "-" + String.format("%03d", Account.getAccountCounter() + 1);
-        Customer customer;
-        if (customerType == 2) {
-            customer = new PremiumCustomer(customerId, name, age, contact, address);
-        } else {
-            customer = new RegularCustomer(customerId, name, age, contact, address);
-        }
-
-        // Build the account and hand it off to AccountManager
-        String accountNumber = "ACC-" + String.format("%03d", Account.getAccountCounter() + 1);
-        Account account;
-        if (accountType == 1) {
-            account = new SavingAccount(accountNumber, initialDeposit, "Active", customer);
-        } else {
-            account = new CheckingAccount(accountNumber, initialDeposit, "Active", customer);
-        }
-
-        accountManager.addAccount(account);
+        // Delegate creation to AccountManager
+        Customer customer = accountManager.createCustomer(customerType, name, age, contact, address);
+        Account account = accountManager.createAccount(accountType, initialDeposit, customer);
 
         // Display summary
         System.out.println("\n✓ Account created successfully!");

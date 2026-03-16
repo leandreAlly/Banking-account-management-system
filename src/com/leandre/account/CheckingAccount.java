@@ -1,6 +1,7 @@
 package com.leandre.account;
 
 import com.leandre.customer.Customer;
+import com.leandre.exception.InsufficientFundsException;
 
 public class CheckingAccount extends Account {
     private static final double DEFAULT_OVERDRAFT_LIMIT = 1000;
@@ -39,10 +40,12 @@ public class CheckingAccount extends Account {
     }
 
     @Override
-    public double withdraw(double amount) {
+    public double withdraw(double amount) throws InsufficientFundsException {
         if (amount <= 0) throw new IllegalArgumentException("Amount must be positive");
         if (amount > getBalance() + overdraftLimit) {
-            throw new IllegalArgumentException("Amount exceeds balance + overdraft limit of $" + overdraftLimit);
+            throw new InsufficientFundsException(
+                    "Amount exceeds balance + overdraft limit of $" + String.format("%,.2f", overdraftLimit),
+                    getBalance(), amount);
         }
         setBalance(getBalance() - amount);
         return getBalance();
