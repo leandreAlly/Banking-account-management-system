@@ -40,7 +40,7 @@ public class TransactionManager {
         double total = 0;
         for (int i = 0; i < transactionCount; i++) {
             Transaction t = transactions[i];
-            if (t.getAccountNumber().equals(accountNumber)) {
+            if (t.getAccountNumber().equals(accountNumber) && t.getType().equals("DEPOSIT")) {
                 total += t.getAmount();
             }
         }
@@ -51,7 +51,7 @@ public class TransactionManager {
         double total = 0;
         for (int i = 0; i < transactionCount; i++) {
             Transaction t = transactions[i];
-            if (t.getAccountNumber().equals(accountNumber)) {
+            if (t.getAccountNumber().equals(accountNumber) && t.getType().equals("WITHDRAWAL")) {
                 total += t.getAmount();
             }
         }

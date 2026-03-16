@@ -20,12 +20,13 @@ public class PremiumCustomer extends Customer {
 
     @Override
     public void displayCustomerDetails() {
-        System.out.println("com.leandre.customer.Customer ID      : " + getCustomerId());
+        System.out.println("Customer ID      : " + getCustomerId());
+        System.out.println("Name             : " + getName());
         System.out.println("Age              : " + getAge());
         System.out.println("Contact          : " + getContact());
         System.out.println("Address          : " + getAddress());
         System.out.println("Minimum Balance  : $" + minimumBalance);
-        System.out.println("Type             : Premium com.leandre.customer.Customer");
+        System.out.println("Type             : Premium Customer");
     }
 
     @Override
