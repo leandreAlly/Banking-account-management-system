@@ -2,6 +2,7 @@ package com.leandre.account;
 
 import com.leandre.customer.RegularCustomer;
 import com.leandre.exception.InsufficientFundsException;
+import com.leandre.exception.OverdraftExceededException;
 import com.leandre.transaction.TransactionManager;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
@@ -13,7 +14,7 @@ class AccountTest {
         Account account = new CheckingAccount("ACC-001", 1000, "Active",
                 new RegularCustomer("CUST-001", "John", 25, "0788888888", "Kigali"));
         account.deposit(500);
-        assertEquals(2000, account.getBalance());
+        assertEquals(1500, account.getBalance());
     }
 
     @Test
@@ -24,7 +25,7 @@ class AccountTest {
     }
 
     @Test
-    void withdrawFromCheckingAccount() throws InsufficientFundsException {
+    void withdrawFromCheckingAccount() throws InsufficientFundsException, OverdraftExceededException {
         Account account = new CheckingAccount("ACC-001", 1000, "Active",
                 new RegularCustomer("CUST-001", "John", 25, "0788888888", "Kigali"));
         account.withdraw(500);
@@ -35,7 +36,7 @@ class AccountTest {
     void withdrawExceedingOverdraftThrowsException() {
         Account account = new CheckingAccount("ACC-001", 500, "Active",
                 new RegularCustomer("CUST-001", "John", 25, "0788888888", "Kigali"));
-        assertThrows(InsufficientFundsException.class, () -> account.withdraw(2000));
+        assertThrows(OverdraftExceededException.class, () -> account.withdraw(2000));
     }
 
     @Test
@@ -46,7 +47,7 @@ class AccountTest {
     }
 
     @Test
-    void withdrawFromSavingsAllowedAboveMinimum() throws InsufficientFundsException {
+    void withdrawFromSavingsAllowedAboveMinimum() throws InsufficientFundsException, OverdraftExceededException {
         Account account = new SavingAccount("ACC-002", 1000, "Active",
                 new RegularCustomer("CUST-002", "Jane", 30, "0788888889", "Kigali"));
         account.withdraw(400);
@@ -61,7 +62,7 @@ class AccountTest {
                 new RegularCustomer("CUST-002", "Jane", 30, "0788888889", "Kigali"));
         TransactionManager transactionManager = new TransactionManager();
 
-        assertThrows(InsufficientFundsException.class,
+        assertThrows(OverdraftExceededException.class,
                 () -> transactionManager.executeTransfer(source, dest, 2000));
 
         assertEquals(500, source.getBalance());

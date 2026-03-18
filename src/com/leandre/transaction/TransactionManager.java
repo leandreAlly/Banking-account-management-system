@@ -2,6 +2,7 @@ package com.leandre.transaction;
 
 import com.leandre.account.Account;
 import com.leandre.exception.InsufficientFundsException;
+import com.leandre.exception.OverdraftExceededException;
 
 public class TransactionManager {
     private final Transaction[] transactions;
@@ -12,7 +13,7 @@ public class TransactionManager {
         transactionCount = 0;
     }
 
-    public Transaction[] executeTransfer(Account source, Account destination, double amount) throws InsufficientFundsException {
+    public Transaction[] executeTransfer(Account source, Account destination, double amount) throws InsufficientFundsException, OverdraftExceededException {
         source.processTransaction(amount, "TRANSFER_OUT");
         destination.processTransaction(amount, "TRANSFER_IN");
 
@@ -25,7 +26,7 @@ public class TransactionManager {
         return new Transaction[]{outTransaction, inTransaction};
     }
 
-    public Transaction executeTransaction(Account account, double amount, String type) throws InsufficientFundsException {
+    public Transaction executeTransaction(Account account, double amount, String type) throws InsufficientFundsException, OverdraftExceededException {
         account.processTransaction(amount, type);
         Transaction transaction = new Transaction(account.getAccountNumber(), type, amount, account.getBalance());
         addTransaction(transaction);

@@ -2,12 +2,13 @@ package com.leandre.account;
 
 import com.leandre.customer.Customer;
 import com.leandre.exception.InsufficientFundsException;
+import com.leandre.exception.OverdraftExceededException;
 import com.leandre.transaction.Transactable;
 
 public abstract class Account implements Transactable {
 
     @Override
-    public boolean processTransaction(double amount, String type) throws InsufficientFundsException {
+    public boolean processTransaction(double amount, String type) throws InsufficientFundsException, OverdraftExceededException {
         if (type.equals("DEPOSIT") || type.equals("TRANSFER_IN")) {
             deposit(amount);
         } else if (type.equals("WITHDRAWAL") || type.equals("TRANSFER_OUT")) {
@@ -33,7 +34,7 @@ public abstract class Account implements Transactable {
 
     public abstract void displayAccountDetails();
     public abstract String getAccountType();
-    public abstract double withdraw(double amount) throws InsufficientFundsException;
+    public abstract double withdraw(double amount) throws InsufficientFundsException, OverdraftExceededException;
 
     public double previewBalance(double amount, String type) {
         if (type.equals("DEPOSIT") || type.equals("TRANSFER_IN")) {
@@ -43,9 +44,13 @@ public abstract class Account implements Transactable {
         }
     }
 
+    protected void validateAmount(double amount) {
+        if (amount <= 0) throw new IllegalArgumentException("Amount must be positive");
+    }
+
     public double deposit(double amount)
     {
-        if(amount <= 0) throw new IllegalArgumentException("Amount cannot be negative");
+        validateAmount(amount);
         balance = balance + amount;
         return balance;
     }

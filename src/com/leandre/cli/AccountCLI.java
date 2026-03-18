@@ -3,6 +3,7 @@ package com.leandre.cli;
 import com.leandre.account.Account;
 import com.leandre.account.AccountManager;
 import com.leandre.customer.Customer;
+import com.leandre.validation.InputValidator;
 
 import java.util.Scanner;
 
@@ -14,37 +15,24 @@ public class AccountCLI {
         System.out.println("ACCOUNT CREATION");
         System.out.println("----------------------------------------");
 
-
-        scanner.nextLine();
-        System.out.print("Enter customer name: ");
-        String name = scanner.nextLine();
-
-        System.out.print("Enter customer age: ");
-        int age = scanner.nextInt();
-
-        scanner.nextLine();
-        System.out.print("Enter customer contact: ");
-        String contact = scanner.nextLine();
-
-        System.out.print("Enter customer address: ");
-        String address = scanner.nextLine();
+        String name = InputValidator.readName(scanner, "Enter customer name: ");
+        int age = InputValidator.readAge(scanner, "Enter customer age: ");
+        String contact = InputValidator.readContact(scanner, "Enter customer contact: ");
+        String address = InputValidator.readAddress(scanner, "Enter customer address: ");
 
         // Customer type
         System.out.println("\nCustomer type:");
         System.out.println("1. Regular Customer (Standard banking services)");
         System.out.println("2. Premium Customer (Enhanced benefits, min balance $10,000)");
-        System.out.print("Select type (1-2): ");
-        int customerType = scanner.nextInt();
+        int customerType = InputValidator.readInt(scanner, "Select type (1-2): ", 1, 2);
 
         // Account type
         System.out.println("\nAccount type:");
         System.out.println("1. Savings Account (Interest: 3.5%, Min Balance: $500)");
         System.out.println("2. Checking Account (Overdraft: $1,000, Monthly Fee: $10)");
-        System.out.print("Select type (1-2): ");
-        int accountType = scanner.nextInt();
+        int accountType = InputValidator.readInt(scanner, "Select type (1-2): ", 1, 2);
 
-        System.out.print("Enter initial deposit amount: $");
-        double initialDeposit = scanner.nextDouble();
+        double initialDeposit = InputValidator.readDouble(scanner, "Enter initial deposit amount: $");
 
         // Delegate creation to AccountManager
         Customer customer = accountManager.createCustomer(customerType, name, age, contact, address);
@@ -55,7 +43,6 @@ public class AccountCLI {
         account.displayAccountDetails();
 
         System.out.print("\nPress Enter to continue...");
-        scanner.nextLine();
         scanner.nextLine();
     }
 
@@ -77,7 +64,4 @@ public class AccountCLI {
         scanner.nextLine();
         scanner.nextLine();
     }
-
-
-
 }

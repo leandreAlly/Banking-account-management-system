@@ -42,7 +42,7 @@ public class SavingAccount extends Account {
 
     @Override
     public double withdraw(double amount) throws InsufficientFundsException {
-        if (amount <= 0) throw new IllegalArgumentException("Amount must be positive");
+        validateAmount(amount);
         if (getBalance() - amount < minimumBalance) {
             throw new InsufficientFundsException(
                     "Withdrawal denied. Balance cannot fall below the minimum balance of $" +
