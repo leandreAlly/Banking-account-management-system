@@ -54,5 +54,8 @@ public class SavingAccount extends Account {
     public double calculateInterestRate() {
         return getBalance() * (interestRate / 100);
     }
+
+    public double getInterestRate() { return interestRate; }
+    public double getMinimumBalance() { return minimumBalance; }
 }
 

@@ -30,3 +30,7 @@ bin/
 ### Mac OS ###
 .DS_Store
 .idea/
+/lib
+
+### Runtime data ###
+accounts.txt

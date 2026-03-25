@@ -13,6 +13,8 @@ public class Main {
         TransactionManager transactionManager = new TransactionManager();
         int choice;
 
+        accountManager.loadFromFile();
+
         do {
             MenuNavigation.displayMainMenu();
             try {
@@ -26,6 +28,7 @@ public class Main {
                 case 1:
                     System.out.println("→ Create Account selected");
                     AccountCLI.createAccount(accountManager);
+                    accountManager.saveToFile();
                     break;
                 case 2:
                     System.out.println("→ View Accounts selected");
@@ -34,12 +37,16 @@ public class Main {
                 case 3:
                     System.out.println("→ Process Transaction selected");
                     TransactionCLI.processTransaction(scanner, accountManager, transactionManager);
+                    // Auto-save after transaction (balances may have changed)
+                    accountManager.saveToFile();
                     break;
                 case 4:
                     System.out.println("→ View Transaction History selected");
                     TransactionCLI.viewTransactionHistory(scanner, accountManager, transactionManager);
                     break;
                 case 5:
+                    // Save accounts before exiting
+                    accountManager.saveToFile();
                     System.out.println("Goodbye!");
                     break;
                 default:
