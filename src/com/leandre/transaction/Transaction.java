@@ -9,7 +9,8 @@ public class Transaction {
     private String type;
     private double amount;
     private double balanceAfter;
-    private String timestamp;
+    //private String timestamp;
+    private LocalDateTime timestamp;
 
     private static int transactionCounter = 0;
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -20,7 +21,8 @@ public class Transaction {
         this.type = type;
         this.amount = amount;
         this.balanceAfter = balanceAfter;
-        this.timestamp = LocalDateTime.now().format(FORMATTER);
+        //this.timestamp = LocalDateTime.now().format(FORMATTER);
+        this.timestamp = LocalDateTime.now();
     }
 
     public void displayTransactionDetails() {
@@ -29,7 +31,7 @@ public class Transaction {
         System.out.println("Type            : " + type);
         System.out.println("Amount          : " + amount);
         System.out.println("Balance After   : " + balanceAfter);
-        System.out.println("Timestamp       : " + timestamp);
+        System.out.println("Timestamp       : " + timestamp.format(FORMATTER));
     }
 
 
@@ -73,11 +75,16 @@ public class Transaction {
         this.balanceAfter = balanceAfter;
     }
 
-    public String getTimestamp() {
+    //  public String getTimestamp() { return timestamp; }
+    public LocalDateTime getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(String timestamp) {
+    public String getFormattedTimestamp() {
+        return timestamp.format(FORMATTER);
+    }
+
+    public void setTimestamp(LocalDateTime timestamp) {
         this.timestamp = timestamp;
     }
 
