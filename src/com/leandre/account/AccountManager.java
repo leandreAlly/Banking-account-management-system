@@ -49,7 +49,7 @@ public class AccountManager {
                 return accounts[i];
             }
         }
-        throw new InvalidAccountException("Account not found: " + accountNumber, accountNumber);
+        throw new InvalidAccountException("Account not found, Please check account number and try again: " + accountNumber, accountNumber);
     }
 
     public void viewAllAccounts() {

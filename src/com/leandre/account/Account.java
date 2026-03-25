@@ -45,6 +45,7 @@ public abstract class Account implements Transactable {
     }
 
     protected void validateAmount(double amount) {
+        //TODO: move this to invalid amount custom exception
         if (amount <= 0) throw new IllegalArgumentException("Amount must be positive");
     }
 
@@ -96,3 +97,5 @@ public abstract class Account implements Transactable {
         this.customer = customer;
     }
 }
+
+

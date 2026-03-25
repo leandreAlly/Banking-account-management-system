@@ -36,6 +36,7 @@ public class TransactionManager {
     public void addTransaction(Transaction transaction) {
         if (transactionCount < transactions.length) {
             transactions[transactionCount++] = transaction;
+            //TODO: implement method that prints transaction details in a user-friendly format
             System.out.println("Transaction added successfully: " + transaction.getTransactionId());
         } else {
             System.out.println("Transaction limit reached. Cannot add more transactions.");
