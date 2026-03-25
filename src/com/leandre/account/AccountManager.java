@@ -1,5 +1,10 @@
 package com.leandre.account;
 
+import com.leandre.customer.Customer;
+import com.leandre.customer.PremiumCustomer;
+import com.leandre.customer.RegularCustomer;
+import com.leandre.exception.InvalidAccountException;
+
 public class AccountManager {
     private Account[] accounts;
     private int accountCount;
@@ -7,6 +12,26 @@ public class AccountManager {
     public AccountManager() {
         accounts = new Account[50];
         accountCount =  0;
+    }
+
+    public Customer createCustomer(int customerType, String name, int age, String contact, String address) {
+        String customerId = "CUST-" + (customerType == 2 ? "PREM" : "REG") + "-" + String.format("%03d", Account.getAccountCounter() + 1);
+        if (customerType == 2) {
+            return new PremiumCustomer(customerId, name, age, contact, address);
+        }
+        return new RegularCustomer(customerId, name, age, contact, address);
+    }
+
+    public Account createAccount(int accountType, double initialDeposit, Customer customer) {
+        String accountNumber = "ACC-" + String.format("%03d", Account.getAccountCounter() + 1);
+        Account account;
+        if (accountType == 1) {
+            account = new SavingAccount(accountNumber, initialDeposit, "Active", customer);
+        } else {
+            account = new CheckingAccount(accountNumber, initialDeposit, "Active", customer);
+        }
+        addAccount(account);
+        return account;
     }
 
     public void addAccount(Account account) {
@@ -18,13 +43,13 @@ public class AccountManager {
         }
     }
 
-    public Account findAccount(String accountNumber) {
+    public Account findAccount(String accountNumber) throws InvalidAccountException {
         for (int i = 0; i < accountCount; i++) {
             if (accounts[i].getAccountNumber().equals(accountNumber)) {
                 return accounts[i];
             }
         }
-        return null;
+        throw new InvalidAccountException("Account not found, Please check account number and try again: " + accountNumber, accountNumber);
     }
 
     public void viewAllAccounts() {

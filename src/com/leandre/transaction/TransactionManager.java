@@ -1,5 +1,9 @@
 package com.leandre.transaction;
 
+import com.leandre.account.Account;
+import com.leandre.exception.InsufficientFundsException;
+import com.leandre.exception.OverdraftExceededException;
+
 public class TransactionManager {
     private final Transaction[] transactions;
     private int transactionCount;
@@ -9,9 +13,30 @@ public class TransactionManager {
         transactionCount = 0;
     }
 
+    public Transaction[] executeTransfer(Account source, Account destination, double amount) throws InsufficientFundsException, OverdraftExceededException {
+        source.processTransaction(amount, "TRANSFER_OUT");
+        destination.processTransaction(amount, "TRANSFER_IN");
+
+        Transaction outTransaction = new Transaction(source.getAccountNumber(), "TRANSFER_OUT", amount, source.getBalance());
+        Transaction inTransaction = new Transaction(destination.getAccountNumber(), "TRANSFER_IN", amount, destination.getBalance());
+
+        addTransaction(outTransaction);
+        addTransaction(inTransaction);
+
+        return new Transaction[]{outTransaction, inTransaction};
+    }
+
+    public Transaction executeTransaction(Account account, double amount, String type) throws InsufficientFundsException, OverdraftExceededException {
+        account.processTransaction(amount, type);
+        Transaction transaction = new Transaction(account.getAccountNumber(), type, amount, account.getBalance());
+        addTransaction(transaction);
+        return transaction;
+    }
+
     public void addTransaction(Transaction transaction) {
         if (transactionCount < transactions.length) {
             transactions[transactionCount++] = transaction;
+            //TODO: implement method that prints transaction details in a user-friendly format
             System.out.println("Transaction added successfully: " + transaction.getTransactionId());
         } else {
             System.out.println("Transaction limit reached. Cannot add more transactions.");
@@ -40,7 +65,7 @@ public class TransactionManager {
         double total = 0;
         for (int i = 0; i < transactionCount; i++) {
             Transaction t = transactions[i];
-            if (t.getAccountNumber().equals(accountNumber) && t.getType().equals("DEPOSIT")) {
+            if (t.getAccountNumber().equals(accountNumber) && (t.getType().equals("DEPOSIT") || t.getType().equals("TRANSFER_IN"))) {
                 total += t.getAmount();
             }
         }
@@ -51,7 +76,7 @@ public class TransactionManager {
         double total = 0;
         for (int i = 0; i < transactionCount; i++) {
             Transaction t = transactions[i];
-            if (t.getAccountNumber().equals(accountNumber) && t.getType().equals("WITHDRAWAL")) {
+            if (t.getAccountNumber().equals(accountNumber) && (t.getType().equals("WITHDRAWAL") || t.getType().equals("TRANSFER_OUT"))) {
                 total += t.getAmount();
             }
         }

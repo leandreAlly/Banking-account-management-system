@@ -1,15 +1,17 @@
 package com.leandre.account;
 
 import com.leandre.customer.Customer;
+import com.leandre.exception.InsufficientFundsException;
+import com.leandre.exception.OverdraftExceededException;
 import com.leandre.transaction.Transactable;
 
 public abstract class Account implements Transactable {
 
     @Override
-    public boolean processTransaction(double amount, String type) {
-        if (type.equals("DEPOSIT")) {
+    public boolean processTransaction(double amount, String type) throws InsufficientFundsException, OverdraftExceededException {
+        if (type.equals("DEPOSIT") || type.equals("TRANSFER_IN")) {
             deposit(amount);
-        } else if (type.equals("WITHDRAWAL")) {
+        } else if (type.equals("WITHDRAWAL") || type.equals("TRANSFER_OUT")) {
             withdraw(amount);
         } else {
             return false;
@@ -32,10 +34,24 @@ public abstract class Account implements Transactable {
 
     public abstract void displayAccountDetails();
     public abstract String getAccountType();
-    public abstract double withdraw(double amount);
+    public abstract double withdraw(double amount) throws InsufficientFundsException, OverdraftExceededException;
 
-    public double deposit(double amount) {
-        if(amount <= 0) throw new IllegalArgumentException("Amount cannot be negative");
+    public double previewBalance(double amount, String type) {
+        if (type.equals("DEPOSIT") || type.equals("TRANSFER_IN")) {
+            return balance + amount;
+        } else {
+            return balance - amount;
+        }
+    }
+
+    protected void validateAmount(double amount) {
+        //TODO: move this to invalid amount custom exception
+        if (amount <= 0) throw new IllegalArgumentException("Amount must be positive");
+    }
+
+    public double deposit(double amount)
+    {
+        validateAmount(amount);
         balance = balance + amount;
         return balance;
     }
@@ -81,3 +97,5 @@ public abstract class Account implements Transactable {
         this.customer = customer;
     }
 }
+
+

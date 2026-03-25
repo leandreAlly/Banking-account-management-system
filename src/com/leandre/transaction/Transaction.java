@@ -81,6 +81,10 @@ public class Transaction {
         this.timestamp = timestamp;
     }
 
+    public static String peekNextId() {
+        return "TXN" + String.format("%03d", transactionCounter + 1);
+    }
+
     public static int getTransactionCounter() {
         return transactionCounter;
     }
