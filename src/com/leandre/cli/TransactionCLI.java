@@ -132,8 +132,10 @@ public class TransactionCLI {
             System.out.println("─".repeat(70));
 
             // table rows
-            for (int i = 0; i < transactionManager.getTransactionCount(); i++) {
-                Transaction t = transactionManager.getTransaction(i);
+            // OLD: for (int i = 0; i < transactionManager.getTransactionCount(); i++) {
+            //          Transaction t = transactionManager.getTransaction(i);
+            // NEW: enhanced for-each over the ArrayList
+            for (Transaction t : transactionManager.getTransactions()) {
                 if (t.getAccountNumber().equals(accountNumber)) {
                     String sign = t.getType().equals("DEPOSIT") ? "+" : "-";
                     System.out.printf("%-8s | %-18s | %-10s | %12s | $%,.2f%n",
