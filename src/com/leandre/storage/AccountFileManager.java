@@ -7,6 +7,8 @@ import com.leandre.customer.Customer;
 import com.leandre.customer.PremiumCustomer;
 import com.leandre.customer.RegularCustomer;
 
+import com.leandre.cli.ConsoleLogger;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -21,7 +23,7 @@ public class AccountFileManager {
     private static final String FILE_NAME = "accounts.txt";
     private static final String DELIMITER = "|";
     private static final String HEADER = "accountNumber|accountType|balance|status|field1|field2"
-            + "|customerId|customerName|customerAge|customerContact|customerAddress|customerType|customerField";
+            + "|customerId|customerName|customerAge|customerContact|customerEmail|customerAddress|customerType|customerField";
 
     private final Path filePath;
 
@@ -40,8 +42,9 @@ public class AccountFileManager {
                 accounts.values().stream().map(AccountFileManager::accountToLine)
         ).collect(Collectors.toList());
 
+        ConsoleLogger.fileInfo("Writing " + accounts.size() + " account(s) to " + filePath.toAbsolutePath() + "...");
         Files.write(filePath, lines);
-        System.out.println("Accounts saved to file: " + filePath.toAbsolutePath() + " (" + accounts.size() + " accounts)");
+        ConsoleLogger.fileSaved(filePath.toString(), accounts.size());
     }
 
     private static String accountToLine(Account account) {
@@ -80,6 +83,7 @@ public class AccountFileManager {
                 c.getName(),
                 String.valueOf(c.getAge()),
                 c.getContact(),
+                c.getEmail(),
                 c.getAddress(),
                 customerType,
                 customerField);
@@ -87,9 +91,10 @@ public class AccountFileManager {
 
     public Map<String, Account> loadAccounts() throws IOException {
         if (!Files.exists(filePath)) {
-            System.out.println("No saved accounts found. Starting fresh.");
+            ConsoleLogger.fileNotFound(filePath.toString());
             return new java.util.HashMap<>();
         }
+        ConsoleLogger.fileInfo("Reading accounts from " + filePath.toAbsolutePath() + "...");
 
         Map<String, Account> accounts;
 
@@ -104,7 +109,13 @@ public class AccountFileManager {
         }
         restoreCounters(accounts);
 
-        System.out.println("Loaded " + accounts.size() + " accounts from file: " + filePath.toAbsolutePath());
+        ConsoleLogger.fileLoaded(filePath.toString(), accounts.size());
+        // Log each loaded account for visibility
+        accounts.values().forEach(a ->
+                ConsoleLogger.fileInfo("  Restored: " + a.getAccountNumber()
+                        + " | " + a.getCustomer().getName()
+                        + " | " + a.getAccountType()
+                        + " | $" + String.format("%,.2f", a.getBalance())));
         return accounts;
     }
 
@@ -124,16 +135,17 @@ public class AccountFileManager {
         String customerName = parts[7];
         int customerAge = Integer.parseInt(parts[8]);
         String customerContact = parts[9];
-        String customerAddress = parts[10];
-        String customerType = parts[11];
-        String customerField = parts.length > 12 ? parts[12] : "";
+        String customerEmail = parts[10];
+        String customerAddress = parts[11];
+        String customerType = parts[12];
+        String customerField = parts.length > 13 ? parts[13] : "";
 
         Customer customer;
         if (customerType.equals("Premium")) {
             double premiumMinBalance = customerField.isEmpty() ? 10_000 : Double.parseDouble(customerField);
-            customer = new PremiumCustomer(customerId, customerName, customerAge, customerContact, customerAddress, premiumMinBalance);
+            customer = new PremiumCustomer(customerId, customerName, customerAge, customerContact, customerEmail, customerAddress, premiumMinBalance);
         } else {
-            customer = new RegularCustomer(customerId, customerName, customerAge, customerContact, customerAddress);
+            customer = new RegularCustomer(customerId, customerName, customerAge, customerContact, customerEmail, customerAddress);
         }
 
         customer.setCustomerId(customerId);

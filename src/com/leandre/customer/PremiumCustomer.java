@@ -9,12 +9,13 @@ public class PremiumCustomer extends Customer {
                            String name,
                            int age,
                            String contact,
+                           String email,
                            String address) {
-        this(customerId, name, age, contact, address, DEFAULT_MINIMUM_BALANCE);
+        this(customerId, name, age, contact, email, address, DEFAULT_MINIMUM_BALANCE);
     }
 
-    public PremiumCustomer(String customerId, String name, int age, String contact, String address, double minimumBalance) {
-        super(customerId, name, age, contact, address);
+    public PremiumCustomer(String customerId, String name, int age, String contact, String email, String address, double minimumBalance) {
+        super(customerId, name, age, contact, email, address);
         this.minimumBalance = minimumBalance;
     }
 
@@ -24,6 +25,7 @@ public class PremiumCustomer extends Customer {
         System.out.println("Name             : " + getName());
         System.out.println("Age              : " + getAge());
         System.out.println("Contact          : " + getContact());
+        System.out.println("Email            : " + getEmail());
         System.out.println("Address          : " + getAddress());
         System.out.println("Minimum Balance  : $" + minimumBalance);
         System.out.println("Type             : Premium Customer");

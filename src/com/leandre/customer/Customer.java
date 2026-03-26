@@ -5,14 +5,16 @@ public abstract class Customer {
     private String name;
     private int age;
     private String contact;
+    private String email;
     private String address;
     private static int customerCounter;
 
-    public Customer(String customerId, String name, int age, String contact, String address) {
+    public Customer(String customerId, String name, int age, String contact, String email, String address) {
         this.customerId ="CUST" + String.format("%03d", ++customerCounter);
         this.name = name;
         this.age = age;
         this.contact = contact;
+        this.email = email;
         this.address = address;
     }
 
@@ -49,6 +51,14 @@ public abstract class Customer {
 
     public void setContact(String contact) {
         this.contact = contact;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     public String getAddress() {

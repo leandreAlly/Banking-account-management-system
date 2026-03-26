@@ -211,7 +211,11 @@ public class TransactionCLI {
     }
 
     private static void handleTransfer(Scanner scanner, Account sourceAccount, String sourceNumber,
+<<<<<<< HEAD
                                        AccountManager accountManager, TransactionManager transactionManager) {
+=======
+                                         AccountManager accountManager, TransactionManager transactionManager) {
+>>>>>>> c5b385b (ft(validation): implement validation and include emails)
         String destNumber = InputValidator.readAccountNumber(scanner, "\nEnter Destination Account Number: ");
 
         if (sourceNumber.equals(destNumber)) {
