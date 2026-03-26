@@ -1,7 +1,6 @@
 package com.leandre.account;
 
 import com.leandre.customer.Customer;
-import com.leandre.exception.InsufficientFundsException;
 
 public class SavingAccount extends Account {
     private static final double DEFAULT_INTEREST_RATE = 3.5;
@@ -41,13 +40,12 @@ public class SavingAccount extends Account {
     }
 
     @Override
-    public double withdraw(double amount) throws InsufficientFundsException {
-        validateAmount(amount);
+    public double withdraw(double amount) {
+        if (amount <= 0) throw new IllegalArgumentException("Amount must be positive");
         if (getBalance() - amount < minimumBalance) {
-            throw new InsufficientFundsException(
+            throw new IllegalArgumentException(
                     "Withdrawal denied. Balance cannot fall below the minimum balance of $" +
-                    String.format("%,.2f", minimumBalance),
-                    getBalance(), amount);
+                    String.format("%,.2f", minimumBalance));
         }
         setBalance(getBalance() - amount);
         return getBalance();
