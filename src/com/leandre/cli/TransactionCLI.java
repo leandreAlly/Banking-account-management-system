@@ -2,12 +2,8 @@ package com.leandre.cli;
 
 import com.leandre.account.Account;
 import com.leandre.account.AccountManager;
-import com.leandre.exception.InsufficientFundsException;
-import com.leandre.exception.InvalidAccountException;
-import com.leandre.exception.OverdraftExceededException;
 import com.leandre.transaction.Transaction;
 import com.leandre.transaction.TransactionManager;
-import com.leandre.validation.InputValidator;
 
 import java.util.Scanner;
 
@@ -18,15 +14,13 @@ public class TransactionCLI {
         System.out.println("─".repeat(50));
 
         // Step 1: find the account
-        String accountNumber = InputValidator.readString(scanner, "Enter Account Number: ").toUpperCase();
+        scanner.nextLine(); // clear buffer
+        System.out.print("Enter Account Number: ");
+        String accountNumber = scanner.nextLine().toUpperCase();
 
-        Account account;
-        try {
-            account = accountManager.findAccount(accountNumber);
-        } catch (InvalidAccountException e) {
-            System.out.println("\n✗ " + e.getMessage());
-            System.out.print("\nPress Enter to continue...");
-            scanner.nextLine();
+        Account account = accountManager.findAccount(accountNumber);
+        if (account == null) {
+            System.out.println("Account not found.");
             return;
         }
 
@@ -40,24 +34,31 @@ public class TransactionCLI {
         System.out.println("\nTransaction type:");
         System.out.println("1. Deposit");
         System.out.println("2. Withdrawal");
-        System.out.println("3. Transfer to Account");
-        int typeChoice = InputValidator.readInt(scanner, "Select type (1-3): ", 1, 3);
-
-        if (typeChoice == 3) {
-            handleTransfer(scanner, account, accountNumber, accountManager, transactionManager);
-            return;
-        }
+        System.out.print("Select type (1-2): ");
+        int typeChoice = scanner.nextInt();
 
         String type = typeChoice == 1 ? "DEPOSIT" : "WITHDRAWAL";
 
         // Step 4: enter amount
-        double amount = InputValidator.readDouble(scanner, "Enter amount: $");
+        System.out.print("Enter amount: $");
+        double amount = scanner.nextDouble();
+
+        // Step 5: validate amount before proceeding
+        if (amount <= 0) {
+            System.out.println("\n✗ Amount must be positive.");
+            System.out.print("\nPress Enter to continue...");
+            scanner.nextLine();
+            scanner.nextLine();
+            return;
+        }
 
         double previousBalance = account.getBalance();
-        double newBalance = account.previewBalance(amount, type);
+        double newBalance = typeChoice == 1
+                ? previousBalance + amount
+                : previousBalance - amount;
 
-        // Step 5: show confirmation
-        String transactionId = Transaction.peekNextId();
+        // Step 6: show confirmation
+        String transactionId = "TXN" + String.format("%03d", Transaction.getTransactionCounter() + 1);
         System.out.println("\nTRANSACTION CONFIRMATION");
         System.out.println("─".repeat(50));
         System.out.println("Transaction ID  : " + transactionId);
@@ -68,21 +69,22 @@ public class TransactionCLI {
         System.out.printf("New Balance     : $%,.2f%n", newBalance);
         System.out.println("─".repeat(50));
 
-        // Step 6: confirm
-        String confirm = InputValidator.readConfirmation(scanner, "Confirm transaction? (Y/N): ");
+        // Step 7: confirm
+        scanner.nextLine(); // clear buffer
+        System.out.print("Confirm transaction? (Y/N): ");
+        String confirm = scanner.nextLine().toUpperCase();
 
         if (confirm.equals("Y")) {
             try {
-                transactionManager.executeTransaction(account, amount, type);
+                account.processTransaction(amount, type);
+
+                // record the transaction
+                Transaction transaction = new Transaction(accountNumber, type, amount, account.getBalance());
+                transactionManager.addTransaction(transaction);
+
                 System.out.println("\n✓ Transaction completed successfully!");
-            } catch (OverdraftExceededException e) {
-                System.out.printf("\n✗ Transaction failed: %s%n", e.getMessage());
-                System.out.printf("  Current balance: $%,.2f | Attempted withdrawal: $%,.2f | Over limit by: $%,.2f%n",
-                        e.getCurrentBalance(), e.getWithdrawAmount(), e.getAmountOverLimit());
-            } catch (InsufficientFundsException e) {
-                System.out.printf("\n✗ Transaction failed: %s%n", e.getMessage());
-                System.out.printf("  Current balance: $%,.2f | Attempted withdrawal: $%,.2f | Deficit: $%,.2f%n",
-                        e.getCurrentBalance(), e.getWithdrawAmount(), e.getDeficit());
+            } catch (IllegalArgumentException e) {
+                System.out.println("\n✗ Transaction failed: " + e.getMessage());
             }
         } else {
             System.out.println("\n✗ Transaction cancelled.");
@@ -97,16 +99,14 @@ public class TransactionCLI {
         System.out.println("\nVIEW TRANSACTION HISTORY");
         System.out.println("─".repeat(30));
 
-        String accountNumber = InputValidator.readString(scanner, "Enter Account Number: ").toUpperCase();
+        scanner.nextLine(); // clear buffer
+        System.out.print("Enter Account Number: ");
+        String accountNumber = scanner.nextLine().toUpperCase();
 
         // find the account
-        Account account;
-        try {
-            account = accountManager.findAccount(accountNumber);
-        } catch (InvalidAccountException e) {
-            System.out.println("\n✗ " + e.getMessage());
-            System.out.print("\nPress Enter to continue...");
-            scanner.nextLine();
+        Account account = accountManager.findAccount(accountNumber);
+        if (account == null) {
+            System.out.println("Account not found.");
             return;
         }
 
@@ -135,7 +135,7 @@ public class TransactionCLI {
             for (int i = 0; i < transactionManager.getTransactionCount(); i++) {
                 Transaction t = transactionManager.getTransaction(i);
                 if (t.getAccountNumber().equals(accountNumber)) {
-                    String sign = (t.getType().equals("DEPOSIT") || t.getType().equals("TRANSFER_IN")) ? "+" : "-";
+                    String sign = t.getType().equals("DEPOSIT") ? "+" : "-";
                     System.out.printf("%-8s | %-18s | %-10s | %12s | $%,.2f%n",
                             t.getTransactionId(),
                             t.getTimestamp(),
@@ -156,68 +156,6 @@ public class TransactionCLI {
             System.out.printf("Total Deposits     : $%,.2f%n", deposits);
             System.out.printf("Total Withdrawals  : $%,.2f%n", withdrawals);
             System.out.printf("Net Change         : %s$%,.2f%n", netChange >= 0 ? "+" : "-", Math.abs(netChange));
-        }
-
-        System.out.print("\nPress Enter to continue...");
-        scanner.nextLine();
-    }
-
-    private static void handleTransfer(Scanner scanner, Account sourceAccount, String sourceNumber,
-                                         AccountManager accountManager, TransactionManager transactionManager) {
-        String destNumber = InputValidator.readString(scanner, "\nEnter Destination Account Number: ").toUpperCase();
-
-        if (sourceNumber.equals(destNumber)) {
-            System.out.println("\n✗ Cannot transfer to the same account.");
-            System.out.print("\nPress Enter to continue...");
-            scanner.nextLine();
-            return;
-        }
-
-        Account destAccount;
-        try {
-            destAccount = accountManager.findAccount(destNumber);
-        } catch (InvalidAccountException e) {
-            System.out.println("\n✗ Destination account error: " + e.getMessage());
-            System.out.print("\nPress Enter to continue...");
-            scanner.nextLine();
-            return;
-        }
-
-        System.out.println("\nDestination Account:");
-        System.out.println("Customer: " + destAccount.getCustomer().getName());
-        System.out.println("Account Type: " + destAccount.getAccountType());
-
-        double amount = InputValidator.readDouble(scanner, "\nEnter transfer amount: $");
-
-        double sourcePrevBalance = sourceAccount.getBalance();
-        double sourceNewBalance = sourceAccount.previewBalance(amount, "TRANSFER_OUT");
-
-        System.out.println("\nTRANSFER CONFIRMATION");
-        System.out.println("─".repeat(50));
-        System.out.println("From Account    : " + sourceNumber + " (" + sourceAccount.getCustomer().getName() + ")");
-        System.out.println("To Account      : " + destNumber + " (" + destAccount.getCustomer().getName() + ")");
-        System.out.printf("Transfer Amount : $%,.2f%n", amount);
-        System.out.println("─".repeat(50));
-        System.out.printf("Your Balance    : $%,.2f → $%,.2f%n", sourcePrevBalance, sourceNewBalance);
-        System.out.println("─".repeat(50));
-
-        String confirm = InputValidator.readConfirmation(scanner, "Confirm transfer? (Y/N): ");
-
-        if (confirm.equals("Y")) {
-            try {
-                transactionManager.executeTransfer(sourceAccount, destAccount, amount);
-                System.out.println("\n✓ Transfer completed successfully!");
-            } catch (OverdraftExceededException e) {
-                System.out.printf("\n✗ Transfer failed: %s%n", e.getMessage());
-                System.out.printf("  Current balance: $%,.2f | Attempted transfer: $%,.2f | Over limit by: $%,.2f%n",
-                        e.getCurrentBalance(), e.getWithdrawAmount(), e.getAmountOverLimit());
-            } catch (InsufficientFundsException e) {
-                System.out.printf("\n✗ Transfer failed: %s%n", e.getMessage());
-                System.out.printf("  Current balance: $%,.2f | Attempted transfer: $%,.2f | Deficit: $%,.2f%n",
-                        e.getCurrentBalance(), e.getWithdrawAmount(), e.getDeficit());
-            }
-        } else {
-            System.out.println("\n✗ Transfer cancelled.");
         }
 
         System.out.print("\nPress Enter to continue...");
