@@ -66,4 +66,10 @@ public abstract class Customer {
     public static void setCustomerCounter(int customerCounter) {
         Customer.customerCounter = customerCounter;
     }
+
+    public static void customerReviewMethod(){
+        int currentCount = getCustomerCounter();
+        System.out.println("Current customer count: " + currentCount);
+        System.out.println("This method was added for review practise");
+    }
 }

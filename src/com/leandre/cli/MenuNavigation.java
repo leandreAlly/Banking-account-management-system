@@ -14,4 +14,8 @@ public class MenuNavigation {
         System.out.println();
         System.out.print("Enter choice: ");
     }
+
+    public void methoodForReview(){
+        System.out.println("This method was added specifically for review.");
+    }
 }
