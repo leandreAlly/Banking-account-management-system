@@ -2,6 +2,7 @@ package com.leandre.transaction;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Transaction {
     private String transactionId;
@@ -12,11 +13,16 @@ public class Transaction {
     //private String timestamp;
     private LocalDateTime timestamp;
 
-    private static int transactionCounter = 0;
+    // OLD: private static int transactionCounter = 0;
+    // NEW: AtomicInteger — thread-safe counter, prevents duplicate IDs
+    //      when multiple threads create transactions simultaneously
+    private static final AtomicInteger transactionCounter = new AtomicInteger(0);
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     public Transaction(String accountNumber, String type, double amount, double balanceAfter) {
-        this.transactionId = "TXN" + String.format("%03d", ++transactionCounter);
+        // OLD: this.transactionId = "TXN" + String.format("%03d", ++transactionCounter);
+        // NEW: atomically increments and returns the new value (no race condition)
+        this.transactionId = "TXN" + String.format("%03d", transactionCounter.incrementAndGet());
         this.accountNumber = accountNumber;
         this.type = type;
         this.amount = amount;
@@ -88,11 +94,15 @@ public class Transaction {
         this.timestamp = timestamp;
     }
 
-    public static int getTransactionCounter() {
-        return transactionCounter;
+    public static String peekNextId() {
+        return "TXN" + String.format("%03d", transactionCounter.get() + 1);
     }
 
-    public static void setTransactionCounter(int transactionCounter) {
-        Transaction.transactionCounter = transactionCounter;
+    public static int getTransactionCounter() {
+        return transactionCounter.get();
+    }
+
+    public static void setTransactionCounter(int value) {
+        transactionCounter.set(value);
     }
 }
