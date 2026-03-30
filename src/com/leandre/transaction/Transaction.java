@@ -2,6 +2,7 @@ package com.leandre.transaction;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Transaction {
     private String transactionId;
@@ -9,18 +10,25 @@ public class Transaction {
     private String type;
     private double amount;
     private double balanceAfter;
-    private String timestamp;
+    //private String timestamp;
+    private LocalDateTime timestamp;
 
-    private static int transactionCounter = 0;
+    // OLD: private static int transactionCounter = 0;
+    // NEW: AtomicInteger — thread-safe counter, prevents duplicate IDs
+    //      when multiple threads create transactions simultaneously
+    private static final AtomicInteger transactionCounter = new AtomicInteger(0);
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     public Transaction(String accountNumber, String type, double amount, double balanceAfter) {
-        this.transactionId = "TXN" + String.format("%03d", ++transactionCounter);
+        // OLD: this.transactionId = "TXN" + String.format("%03d", ++transactionCounter);
+        // NEW: atomically increments and returns the new value (no race condition)
+        this.transactionId = "TXN" + String.format("%03d", transactionCounter.incrementAndGet());
         this.accountNumber = accountNumber;
         this.type = type;
         this.amount = amount;
         this.balanceAfter = balanceAfter;
-        this.timestamp = LocalDateTime.now().format(FORMATTER);
+        //this.timestamp = LocalDateTime.now().format(FORMATTER);
+        this.timestamp = LocalDateTime.now();
     }
 
     public void displayTransactionDetails() {
@@ -29,7 +37,7 @@ public class Transaction {
         System.out.println("Type            : " + type);
         System.out.println("Amount          : " + amount);
         System.out.println("Balance After   : " + balanceAfter);
-        System.out.println("Timestamp       : " + timestamp);
+        System.out.println("Timestamp       : " + timestamp.format(FORMATTER));
     }
 
 
@@ -73,19 +81,28 @@ public class Transaction {
         this.balanceAfter = balanceAfter;
     }
 
-    public String getTimestamp() {
+    //  public String getTimestamp() { return timestamp; }
+    public LocalDateTime getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(String timestamp) {
+    public String getFormattedTimestamp() {
+        return timestamp.format(FORMATTER);
+    }
+
+    public void setTimestamp(LocalDateTime timestamp) {
         this.timestamp = timestamp;
     }
 
-    public static int getTransactionCounter() {
-        return transactionCounter;
+    public static String peekNextId() {
+        return "TXN" + String.format("%03d", transactionCounter.get() + 1);
     }
 
-    public static void setTransactionCounter(int transactionCounter) {
-        Transaction.transactionCounter = transactionCounter;
+    public static int getTransactionCounter() {
+        return transactionCounter.get();
+    }
+
+    public static void setTransactionCounter(int value) {
+        transactionCounter.set(value);
     }
 }

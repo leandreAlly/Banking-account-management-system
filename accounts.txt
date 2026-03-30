@@ -1,0 +1,2 @@
+accountNumber|accountType|balance|status|field1|field2|customerId|customerName|customerAge|customerContact|customerAddress|customerType|customerField
+ACC-001|Savings|1000.0|Active|3.5|500.0|CUST001|Leandre|19|0788452466|kigali, rwanda|Regular|
