@@ -1,6 +1,7 @@
 package com.leandre;
 import com.leandre.account.AccountManager;
 import com.leandre.cli.AccountCLI;
+import com.leandre.cli.ConsoleLogger;
 import com.leandre.cli.MenuNavigation;
 import com.leandre.cli.TransactionCLI;
 import com.leandre.concurrent.ConcurrentTransactionSimulator;
@@ -14,38 +15,41 @@ public class Main {
         TransactionManager transactionManager = new TransactionManager();
         int choice;
 
+        // Startup
+        ConsoleLogger.printStartupBanner();
         accountManager.loadFromFile();
+        ConsoleLogger.system("Ready. Entering main menu.\n");
 
         do {
             MenuNavigation.displayMainMenu();
             try {
                 choice = Integer.parseInt(scanner.nextLine().trim());
             } catch (NumberFormatException e) {
-                System.out.println("Invalid input. Please enter a number between 1-6.");
+                ConsoleLogger.warn("Invalid input. Please enter a number between 1-6.");
                 choice = -1;
             }
 
             switch (choice) {
                 case 1:
-                    System.out.println("→ Create Account selected");
+                    ConsoleLogger.system("Create Account selected");
                     AccountCLI.createAccount(accountManager);
                     accountManager.saveToFile();
                     break;
                 case 2:
-                    System.out.println("→ View Accounts selected");
+                    ConsoleLogger.system("View Accounts selected");
                     AccountCLI.viewAccounts(scanner, accountManager);
                     break;
                 case 3:
-                    System.out.println("→ Process Transaction selected");
+                    ConsoleLogger.system("Process Transaction selected");
                     TransactionCLI.processTransaction(scanner, accountManager, transactionManager);
                     accountManager.saveToFile();
                     break;
                 case 4:
-                    System.out.println("→ View Transaction History selected");
+                    ConsoleLogger.system("View Transaction History selected");
                     TransactionCLI.viewTransactionHistory(scanner, accountManager, transactionManager);
                     break;
                 case 5:
-                    System.out.println("→ Concurrent Transaction Simulation selected");
+                    ConsoleLogger.system("Concurrent Transaction Simulation selected");
                     System.out.println("\nSimulation type:");
                     System.out.println("1. Thread Simulation (manual threads with deposits & withdrawals)");
                     System.out.println("2. Parallel Stream Simulation (batch deposits)");
@@ -55,7 +59,7 @@ public class Main {
                     } else if (simChoice == 2) {
                         ConcurrentTransactionSimulator.runParallelStreamSimulation(scanner, accountManager, transactionManager);
                     } else {
-                        System.out.println("Invalid simulation type.");
+                        ConsoleLogger.warn("Invalid simulation type.");
                     }
                     accountManager.saveToFile();
                     System.out.print("\nPress Enter to continue...");
@@ -63,10 +67,10 @@ public class Main {
                     break;
                 case 6:
                     accountManager.saveToFile();
-                    System.out.println("Goodbye!");
+                    ConsoleLogger.printShutdownMessage();
                     break;
                 default:
-                    System.out.println("Invalid choice. Please enter 1-6.");
+                    ConsoleLogger.warn("Invalid choice. Please enter 1-6.");
             }
 
         } while (choice != 6);

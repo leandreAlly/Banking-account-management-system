@@ -2,6 +2,7 @@ package com.leandre.concurrent;
 
 import com.leandre.account.Account;
 import com.leandre.account.AccountManager;
+import com.leandre.cli.ConsoleLogger;
 import com.leandre.exception.InsufficientFundsException;
 import com.leandre.exception.InvalidAccountException;
 import com.leandre.exception.OverdraftExceededException;
@@ -11,15 +12,13 @@ import com.leandre.validation.InputValidator;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 /**
  * Demonstrates thread-safe concurrent transactions using:
  * 1. Thread + synchronized — multiple threads doing deposits/withdrawals simultaneously
  * 2. Parallel streams     — batch transaction simulation
- *
- * This class shows how synchronized methods on Account and TransactionManager
- * prevent race conditions and data inconsistencies.
  */
 public class ConcurrentTransactionSimulator {
 
@@ -35,7 +34,7 @@ public class ConcurrentTransactionSimulator {
         try {
             account = accountManager.findAccount(accountNumber);
         } catch (InvalidAccountException e) {
-            System.out.println("\n✗ " + e.getMessage());
+            ConsoleLogger.error(e.getMessage());
             return;
         }
 
@@ -47,50 +46,55 @@ public class ConcurrentTransactionSimulator {
         int numWithdrawals = InputValidator.readInt(scanner, "Number of concurrent withdrawals (1-20): ", 1, 20);
         double withdrawalAmount = InputValidator.readDouble(scanner, "Amount per withdrawal: $");
 
-        System.out.println("\nLaunching " + numDeposits + " deposit threads and "
-                + numWithdrawals + " withdrawal threads simultaneously...");
-        System.out.println("─".repeat(60));
-
         double expectedBalance = account.getBalance()
                 + (numDeposits * depositAmount)
                 - (numWithdrawals * withdrawalAmount);
 
-        // Create threads
+        System.out.println();
+        ConsoleLogger.system("Preparing " + (numDeposits + numWithdrawals) + " threads...");
+        System.out.println("─".repeat(60));
+
         List<Thread> threads = new ArrayList<>();
 
         // Deposit threads
         for (int i = 0; i < numDeposits; i++) {
             final int threadNum = i + 1;
+            String threadName = String.format("Deposit-%02d", threadNum);
             Thread t = new Thread(() -> {
+                ConsoleLogger.threadStarted(threadName);
                 try {
-                    // synchronized is inside executeTransaction and Account.deposit
                     transactionManager.executeTransaction(account, depositAmount, "DEPOSIT");
-                    System.out.printf("  [Deposit  Thread-%02d] +$%,.2f completed (balance: $%,.2f)%n",
-                            threadNum, depositAmount, account.getBalance());
+                    ConsoleLogger.threadCompleted(threadName,
+                            String.format("+$%,.2f → balance: $%,.2f", depositAmount, account.getBalance()));
                 } catch (InsufficientFundsException | OverdraftExceededException e) {
-                    System.out.printf("  [Deposit  Thread-%02d] FAILED: %s%n", threadNum, e.getMessage());
+                    ConsoleLogger.threadFailed(threadName, e.getMessage());
                 }
-            }, "Deposit-" + threadNum);
+            }, threadName);
             threads.add(t);
         }
 
         // Withdrawal threads
         for (int i = 0; i < numWithdrawals; i++) {
             final int threadNum = i + 1;
+            String threadName = String.format("Withdraw-%02d", threadNum);
             Thread t = new Thread(() -> {
+                ConsoleLogger.threadStarted(threadName);
                 try {
-                    // synchronized prevents race condition: check-then-withdraw is atomic
                     transactionManager.executeTransaction(account, withdrawalAmount, "WITHDRAWAL");
-                    System.out.printf("  [Withdraw Thread-%02d] -$%,.2f completed (balance: $%,.2f)%n",
-                            threadNum, withdrawalAmount, account.getBalance());
+                    ConsoleLogger.threadCompleted(threadName,
+                            String.format("-$%,.2f → balance: $%,.2f", withdrawalAmount, account.getBalance()));
                 } catch (InsufficientFundsException | OverdraftExceededException e) {
-                    System.out.printf("  [Withdraw Thread-%02d] FAILED: %s%n", threadNum, e.getMessage());
+                    ConsoleLogger.threadFailed(threadName, e.getMessage());
                 }
-            }, "Withdrawal-" + threadNum);
+            }, threadName);
             threads.add(t);
         }
 
-        // Start all threads at the same time
+        // Start all threads and measure time
+        long startTime = System.currentTimeMillis();
+        ConsoleLogger.system("Launching all threads simultaneously...");
+        System.out.println();
+
         for (Thread t : threads) {
             t.start();
         }
@@ -101,24 +105,36 @@ public class ConcurrentTransactionSimulator {
                 t.join();
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                System.out.println("Simulation interrupted: " + e.getMessage());
+                ConsoleLogger.error("Simulation interrupted: " + e.getMessage());
             }
         }
 
+        long elapsed = System.currentTimeMillis() - startTime;
+
         // Results
-        System.out.println("\n" + "─".repeat(60));
+        System.out.println();
+        ConsoleLogger.threadSummary(threads.size(), elapsed);
+        System.out.println();
+        System.out.println("─".repeat(60));
         System.out.println("SIMULATION RESULTS");
         System.out.println("─".repeat(60));
-        System.out.printf("Final balance          : $%,.2f%n", account.getBalance());
-        System.out.printf("Expected balance       : $%,.2f%n", expectedBalance);
-        System.out.printf("Difference             : $%,.2f%n", Math.abs(account.getBalance() - expectedBalance));
+        System.out.printf("  Threads executed     : %d (%d deposits + %d withdrawals)%n",
+                threads.size(), numDeposits, numWithdrawals);
+        System.out.printf("  Time elapsed         : %dms%n", elapsed);
+        System.out.printf("  Starting balance     : $%,.2f%n",
+                expectedBalance - (numDeposits * depositAmount) + (numWithdrawals * withdrawalAmount));
+        System.out.printf("  Final balance        : $%,.2f%n", account.getBalance());
+        System.out.printf("  Expected balance     : $%,.2f%n", expectedBalance);
 
-        if (Math.abs(account.getBalance() - expectedBalance) < 0.01) {
-            System.out.println("✓ Thread-safe! No race conditions detected.");
+        double diff = Math.abs(account.getBalance() - expectedBalance);
+        if (diff < 0.01) {
+            ConsoleLogger.success("Thread-safe! No race conditions — balance matches expected value.");
         } else {
-            System.out.println("✗ Race condition detected! (this should not happen with synchronized)");
+            ConsoleLogger.error("Race condition detected! Difference: $" + String.format("%,.2f", diff));
         }
-        System.out.println("Total transactions     : " + transactionManager.countByAccount(accountNumber));
+
+        System.out.printf("  Total transactions   : %d%n", transactionManager.countByAccount(accountNumber));
+        System.out.println("─".repeat(60));
     }
 
     // ── Option 2: Parallel Stream batch simulation ───────────────────────
@@ -133,7 +149,7 @@ public class ConcurrentTransactionSimulator {
         try {
             account = accountManager.findAccount(accountNumber);
         } catch (InvalidAccountException e) {
-            System.out.println("\n✗ " + e.getMessage());
+            ConsoleLogger.error(e.getMessage());
             return;
         }
 
@@ -144,45 +160,52 @@ public class ConcurrentTransactionSimulator {
 
         double expectedBalance = account.getBalance() + (batchSize * amount);
 
-        System.out.println("\nProcessing " + batchSize + " deposits in parallel using parallel stream...");
+        System.out.println();
+        ConsoleLogger.system("Processing " + batchSize + " deposits via parallel stream (ForkJoinPool)...");
         System.out.println("─".repeat(60));
+        System.out.println();
 
         long startTime = System.currentTimeMillis();
 
         // Parallel stream processes deposits concurrently across multiple CPU cores
-        // synchronized on Account.deposit() prevents race conditions
         List<String> results = IntStream.rangeClosed(1, batchSize)
                 .parallel()
                 .mapToObj(i -> {
+                    String workerThread = Thread.currentThread().getName();
                     try {
                         transactionManager.executeTransaction(account, amount, "DEPOSIT");
-                        return String.format("  [Batch-%03d] +$%,.2f → balance: $%,.2f (%s)",
-                                i, amount, account.getBalance(), Thread.currentThread().getName());
+                        return String.format("[OK]    Batch-%03d | +$%,.2f | balance: $%,.2f | thread: %s",
+                                i, amount, account.getBalance(), workerThread);
                     } catch (InsufficientFundsException | OverdraftExceededException e) {
-                        return String.format("  [Batch-%03d] FAILED: %s", i, e.getMessage());
+                        return String.format("[FAIL]  Batch-%03d | %s | thread: %s",
+                                i, e.getMessage(), workerThread);
                     }
                 })
-                .collect(java.util.stream.Collectors.toList());
+                .collect(Collectors.toList());
 
         long elapsed = System.currentTimeMillis() - startTime;
 
         // Print results
-        results.forEach(System.out::println);
+        results.forEach(r -> System.out.println("  " + r));
 
         // Summary
-        System.out.println("\n" + "─".repeat(60));
+        System.out.println();
+        ConsoleLogger.threadSummary(batchSize, elapsed);
+        System.out.println();
+        System.out.println("─".repeat(60));
         System.out.println("PARALLEL STREAM RESULTS");
         System.out.println("─".repeat(60));
-        System.out.printf("Final balance          : $%,.2f%n", account.getBalance());
-        System.out.printf("Expected balance       : $%,.2f%n", expectedBalance);
-        System.out.printf("Difference             : $%,.2f%n", Math.abs(account.getBalance() - expectedBalance));
-        System.out.println("Time elapsed           : " + elapsed + "ms");
-        System.out.printf("Threads used           : parallel stream (ForkJoinPool)%n");
+        System.out.printf("  Batch size           : %d deposits%n", batchSize);
+        System.out.printf("  Time elapsed         : %dms%n", elapsed);
+        System.out.printf("  Final balance        : $%,.2f%n", account.getBalance());
+        System.out.printf("  Expected balance     : $%,.2f%n", expectedBalance);
 
-        if (Math.abs(account.getBalance() - expectedBalance) < 0.01) {
-            System.out.println("✓ Thread-safe! Parallel stream produced consistent results.");
+        double diff = Math.abs(account.getBalance() - expectedBalance);
+        if (diff < 0.01) {
+            ConsoleLogger.success("Thread-safe! Parallel stream produced consistent results.");
         } else {
-            System.out.println("✗ Inconsistency detected!");
+            ConsoleLogger.error("Inconsistency detected! Difference: $" + String.format("%,.2f", diff));
         }
+        System.out.println("─".repeat(60));
     }
 }
